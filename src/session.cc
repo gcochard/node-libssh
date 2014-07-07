@@ -278,10 +278,16 @@ void Session::Start () {
   ssh_set_blocking(session, 0);
 
   //TODO: do this async
-  if (ssh_handle_key_exchange(session)) {
-    std::string err("Key exchange error: ");
-    err.append(ssh_get_error(session));
-    OnError(err);
+  int keyExchangeResponse = ssh_handle_key_exchange(session);
+  if(keyExchangeResponse != SSH_OK) {
+    while(keyExchangeResponse == SSH_AGAIN)
+      keyExchangeResponse = ssh_handle_key_exchange(session);
+
+    if(keyExchangeResponse != SSH_OK) {
+      std::string err("Key exchange error: ");
+      err.append(ssh_get_error(session));
+      OnError(err);
+    }
   }
 
   active = true;
